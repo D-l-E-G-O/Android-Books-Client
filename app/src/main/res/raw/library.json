@@ -1,0 +1,74 @@
+{
+  "authors": [
+    {
+      "id": 1,
+      "firstname": "George",
+      "lastname": "Orwell",
+      "books": [
+        {
+          "id": 101,
+          "title": "1984",
+          "publication_year": 1949,
+          "authorId": 1,
+          "tags": [
+            { "id": 10, "name": "Dystopia" },
+            { "id": 11, "name": "Science-Fiction" }
+          ]
+        },
+        {
+          "id": 102,
+          "title": "Animal Farm",
+          "publication_year": 1945,
+          "authorId": 1,
+          "tags": [
+            { "id": 12, "name": "Satire" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "firstname": "Frank",
+      "lastname": "Herbert",
+      "books": [
+        {
+          "id": 103,
+          "title": "Dune",
+          "publication_year": 1965,
+          "authorId": 2,
+          "tags": [
+            { "id": 11, "name": "Science-Fiction" },
+            { "id": 13, "name": "Adventure" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "firstname": "Jane",
+      "lastname": "Austen",
+      "books": [
+        {
+          "id": 104,
+          "title": "Pride and Prejudice",
+          "publication_year": 1813,
+          "authorId": 3,
+          "tags": [
+            { "id": 14, "name": "Romance" },
+            { "id": 15, "name": "Classic" }
+          ]
+        },
+        {
+          "id": 105,
+          "title": "Emma",
+          "publication_year": 1815,
+          "authorId": 3,
+          "tags": [
+            { "id": 14, "name": "Romance" },
+            { "id": 15, "name": "Classic" }
+          ]
+        }
+      ]
+    }
+  ]
+}
