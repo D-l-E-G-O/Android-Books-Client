@@ -30,7 +30,7 @@ public class BookListFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull final LayoutInflater inflater, final ViewGroup container, final Bundle savedInstanceState) {
         final View view = inflater.inflate(R.layout.fragment_book_list, container, false);
-        ui_init(view);
+        initUI(view);
         return view;
     }
 
@@ -40,7 +40,7 @@ public class BookListFragment extends Fragment {
         observeData();
     }
 
-    private void ui_init(final View view) {
+    private void initUI(final View view) {
         final RecyclerView recyclerView = view.findViewById(R.id.recyclerBooks);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
