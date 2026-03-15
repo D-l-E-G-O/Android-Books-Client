@@ -7,7 +7,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -28,6 +31,7 @@ public class MainActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
 
         initData();
+        setupNavigation();
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -36,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         if (savedInstanceState == null) {
-            fragment_load();
+            replaceFragment(new BookListFragment());
         }
     }
 
@@ -63,9 +67,27 @@ public class MainActivity extends AppCompatActivity {
         viewModel.loadJson(jsonString);
     }
 
-    private void fragment_load() {
+    private void setupNavigation() {
+        final BottomNavigationView bottomNav = findViewById(R.id.bottomNavigation);
+
+        bottomNav.setOnItemSelectedListener(item -> {
+            final int itemId = item.getItemId();
+
+            if (itemId == R.id.navBooks) {
+                replaceFragment(new BookListFragment());
+                return true;
+            } else if (itemId == R.id.navAuthors) {
+                replaceFragment(new AuthorListFragment());
+                return true;
+            }
+
+            return false;
+        });
+    }
+
+    private void replaceFragment(final Fragment fragment) {
         getSupportFragmentManager().beginTransaction()
-                .replace(R.id.fragmentContainerView, new BookListFragment())
+                .replace(R.id.fragmentContainerView, fragment)
                 .commit();
     }
 }
