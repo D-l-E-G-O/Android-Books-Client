@@ -42,7 +42,13 @@ public class AuthorListFragment extends Fragment {
         final RecyclerView recyclerView = view.findViewById(R.id.recyclerAuthors);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        adapter = new AuthorAdapter(author -> Toast.makeText(getContext(), "Clicked: " + author.getLastname(), Toast.LENGTH_SHORT).show());
+        adapter = new AuthorAdapter(author -> {
+            viewModel.selectAuthor(author);
+            requireActivity().getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.fragmentContainerView, new AuthorDetailFragment())
+                    .addToBackStack(null)
+                    .commit();
+        });
         recyclerView.setAdapter(adapter);
 
         final FloatingActionButton fab = view.findViewById(R.id.fabAuthorAdd);

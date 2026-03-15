@@ -8,6 +8,7 @@ import java.util.ArrayList;
 public class LibraryViewModel extends ViewModel {
     private final LibraryRepository repository;
     private final MutableLiveData<Book> selectedBook = new MutableLiveData<>();
+    private final MutableLiveData<Author> selectedAuthor = new MutableLiveData<>();
 
     public LibraryViewModel() {
         this.repository = new LibraryRepository();
@@ -31,5 +32,13 @@ public class LibraryViewModel extends ViewModel {
 
     public LiveData<Book> getSelectedBook() {
         return selectedBook;
+    }
+
+    public void selectAuthor(final Author author) {
+        selectedAuthor.setValue(author);
+    }
+
+    public LiveData<Author> getSelectedAuthor() {
+        return selectedAuthor;
     }
 }
