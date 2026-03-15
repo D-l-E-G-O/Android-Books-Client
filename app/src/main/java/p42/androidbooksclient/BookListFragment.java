@@ -44,7 +44,13 @@ public class BookListFragment extends Fragment {
         final RecyclerView recyclerView = view.findViewById(R.id.recyclerBooks);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        adapter = new BookAdapter(book -> Toast.makeText(getContext(), "Clicked: " + book.getTitle(), Toast.LENGTH_SHORT).show());
+        adapter = new BookAdapter(book -> {
+            viewModel.selectBook(book);
+            requireActivity().getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.fragmentContainerView, new BookDetailFragment())
+                    .addToBackStack(null)
+                    .commit();
+        });
         recyclerView.setAdapter(adapter);
 
         final FloatingActionButton fab = view.findViewById(R.id.fabBookAdd);
