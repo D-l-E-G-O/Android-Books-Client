@@ -30,7 +30,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
 
-        initData();
+        //initData();
+        viewModel = new ViewModelProvider(this).get(LibraryViewModel.class);
+        viewModel.loadDataFromAPI();
         setupNavigation();
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
@@ -44,28 +46,28 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void initData() {
-        viewModel = new ViewModelProvider(this).get(LibraryViewModel.class);
-
-        String jsonString;
-
-        InputStream inputStream = this.getResources().openRawResource(R.raw.library);
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-        StringBuilder sb = new StringBuilder();
-        String line;
-        while(true) {
-            try {
-                if ((line = reader.readLine()) == null) break;
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            sb.append( line );
-            sb.append( '\n' );
-        }
-        jsonString = sb.toString();
-
-        viewModel.loadJson(jsonString);
-    }
+//    private void initData() {
+//        viewModel = new ViewModelProvider(this).get(LibraryViewModel.class);
+//
+//        String jsonString;
+//
+//        InputStream inputStream = this.getResources().openRawResource(R.raw.library);
+//        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+//        StringBuilder sb = new StringBuilder();
+//        String line;
+//        while(true) {
+//            try {
+//                if ((line = reader.readLine()) == null) break;
+//            } catch (IOException e) {
+//                throw new RuntimeException(e);
+//            }
+//            sb.append( line );
+//            sb.append( '\n' );
+//        }
+//        jsonString = sb.toString();
+//
+//        viewModel.loadJson(jsonString);
+//    }
 
     private void setupNavigation() {
         final BottomNavigationView bottomNav = findViewById(R.id.bottomNavigation);

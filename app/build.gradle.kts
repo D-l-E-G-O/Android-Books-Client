@@ -34,6 +34,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.retrofit)
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
