@@ -12,7 +12,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
+import okhttp3.MediaType;
+import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -27,6 +30,7 @@ public class LibraryRepository {
             .baseUrl("http://10.0.2.2:3000/")
             .build();
 
+    private final API service = retrofit.create(API.class);
 
     private void loadDataFromJson(final JSONArray booksArray) {
         final ArrayList<Book> allBooks = new ArrayList<>();
@@ -101,7 +105,6 @@ public class LibraryRepository {
     }
 
     public void fetchDataFromAPI() {
-        API service = retrofit.create(API.class);
         // Appelle /books?include=author
         Call<ResponseBody> myRequest = service.getData("author");
         myRequest.enqueue(new Callback<>() {
@@ -124,7 +127,87 @@ public class LibraryRepository {
         });
     }
 
+    public void addBook(final String title, final int publicationYear, final int authorId) {
+        JSONObject json = new JSONObject();
+        try {
+            json.put("title", title);
+            json.put("publication_year", publicationYear);
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+
+        RequestBody body = RequestBody.create(
+                json.toString(),
+                MediaType.parse("application/json; charset=utf-8")
+        );
+
+        Call<ResponseBody> myRequest = service.addBook(body);
+
+        myRequest.enqueue(new Callback<>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    try {
+                        JSONArray res = new JSONArray(response.body().string());
+                        int bookId = res.getInt(0);
+                        Book newBook = new Book(bookId, title, publicationYear, authorId, new ArrayList<>());
+                        Objects.requireNonNull(booksLiveData.getValue()).add(newBook);
+                    } catch (IOException | JSONException e) {
+                        Log.e("addBook", "Parsing error", e);
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable throwable) {
+                Log.e("addBook", "onFailure: ", throwable);
+            }
+        });
+    }
+
     public void deleteBook(final int bookId) {
-        // Logique de suppression d'un livre et mise à jour du LiveData
+        Objects.requireNonNull(booksLiveData.getValue()).removeIf(book -> (book.getId() == bookId));
+    }
+
+    public void addAuthor(final String firstname, final String lastname) {
+        JSONObject json = new JSONObject();
+        try {
+            json.put("firstname", firstname);
+            json.put("lastname", lastname);
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+
+        RequestBody body = RequestBody.create(
+                json.toString(),
+                MediaType.parse("application/json; charset=utf-8")
+        );
+
+        Call<ResponseBody> myRequest = service.addAuthor(body);
+        myRequest.enqueue(new Callback<>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    try {
+                        JSONArray res = new JSONArray(response.body().string());
+                        int authorId = res.getInt(0);
+                        Author newAuthor = new Author(authorId, firstname, lastname, new ArrayList<>());
+                        Objects.requireNonNull(authorsLiveData.getValue()).add(newAuthor);
+                    } catch (IOException | JSONException e) {
+                        Log.e("addAuthor", "Parsing error", e);
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable throwable) {
+                Log.e("addAuthor", "onFailure: ", throwable);
+            }
+        });
+    }
+
+    public void deleteAuthor(final int authorId) {
+        Objects.requireNonNull(authorsLiveData.getValue()).removeIf(author -> (author.getId() == authorId));
+        Objects.requireNonNull(booksLiveData.getValue()).removeIf(book -> (book.getAuthorId() == authorId));
     }
 }
