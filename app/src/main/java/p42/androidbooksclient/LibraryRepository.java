@@ -10,6 +10,8 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -25,153 +27,68 @@ public class LibraryRepository {
             .baseUrl("http://10.0.2.2:3000/")
             .build();
 
-    private void loadBooksFromJson(final JSONObject json) {
-        final ArrayList<Book> parsedBooks = new ArrayList<>();
+
+    private void loadDataFromJson(final JSONArray booksArray) {
+        final ArrayList<Book> allBooks = new ArrayList<>();
+        // Maps pour regrouper les livres par auteur et éviter les doublons d'auteurs
+        final Map<Integer, ArrayList<Book>> authorBooksMap = new HashMap<>();
+        final Map<Integer, JSONObject> authorJsonMap = new HashMap<>();
 
         try {
-            final JSONArray booksArray = json.getJSONArray("");
+            for (int i = 0; i < booksArray.length(); i++) {
+                final JSONObject bookJson = booksArray.getJSONObject(i);
 
-            for (int j = 0; j < booksArray.length(); j++) {
-                final JSONObject bookJson = booksArray.getJSONObject(j);
-
+                // 1. Parser le Livre
                 final int bookId = bookJson.getInt("id");
                 final String title = bookJson.getString("title");
-
-                final Integer publicationYear = bookJson.has("publication_year") && !bookJson.isNull("publication_year")
-                        ? bookJson.getInt("publication_year")
-                        : null;
-
+                final Integer pubYear = bookJson.has("publication_year") && !bookJson.isNull("publication_year")
+                        ? bookJson.getInt("publication_year") : null;
                 final int bookAuthorId = bookJson.getInt("authorId");
 
                 final ArrayList<Tag> bookTags = new ArrayList<>();
-                final JSONArray tagsArray = bookJson.getJSONArray("tags");
-
-                for (int k = 0; k < tagsArray.length(); k++) {
-                    final JSONObject tagJson = tagsArray.getJSONObject(k);
-                    final int tagId = tagJson.getInt("id");
-                    final String tagName = tagJson.getString("name");
-
-                    bookTags.add(new Tag(tagId, tagName));
-                }
-
-                final Book newBook = new Book(bookId, title, publicationYear, bookAuthorId, bookTags);
-                parsedBooks.add(newBook);
-            }
-
-        booksLiveData.setValue(parsedBooks);
-
-        } catch (final JSONException e) {
-            Log.e("LibraryRepository", "loadBooksFromJson: ", e);
-        }
-    }
-
-    private void loadAuthorsFromJson(final JSONObject json) {
-        final ArrayList<Author> parsedAuthors = new ArrayList<>();
-
-        try {
-            final JSONArray authorsArray = json.getJSONArray("");
-
-            for (int i = 0; i < authorsArray.length(); i++) {
-                final JSONObject authorJson = authorsArray.getJSONObject(i);
-
-                final int authorId = authorJson.getInt("id");
-                final String firstname = authorJson.getString("firstname");
-                final String lastname = authorJson.getString("lastname");
-
-                final ArrayList<Book> authorBooks = new ArrayList<>();
-                final JSONArray booksArray = authorJson.getJSONArray("books");
-
-                for (int j = 0; j < booksArray.length(); j++) {
-                    final JSONObject bookJson = booksArray.getJSONObject(j);
-
-                    final int bookId = bookJson.getInt("id");
-                    final String title = bookJson.getString("title");
-
-                    final Integer publicationYear = bookJson.has("publication_year") && !bookJson.isNull("publication_year")
-                            ? bookJson.getInt("publication_year")
-                            : null;
-
-                    final int bookAuthorId = bookJson.getInt("authorId");
-
-                    final ArrayList<Tag> bookTags = new ArrayList<>();
-                    final JSONArray tagsArray = bookJson.getJSONArray("tags");
-
+                final JSONArray tagsArray = bookJson.optJSONArray("tags");
+                if (tagsArray != null) {
                     for (int k = 0; k < tagsArray.length(); k++) {
-                        final JSONObject tagJson = tagsArray.getJSONObject(k);
-                        final int tagId = tagJson.getInt("id");
-                        final String tagName = tagJson.getString("name");
-
-                        bookTags.add(new Tag(tagId, tagName));
+                        JSONObject t = tagsArray.getJSONObject(k);
+                        bookTags.add(new Tag(t.getInt("id"), t.getString("name")));
                     }
-
-                    final Book newBook = new Book(bookId, title, publicationYear, bookAuthorId, bookTags);
-                    authorBooks.add(newBook);
                 }
 
-                parsedAuthors.add(new Author(authorId, firstname, lastname, authorBooks));
-            }
+                final Book book = new Book(bookId, title, pubYear, bookAuthorId, bookTags);
+                allBooks.add(book);
 
-            authorsLiveData.setValue(parsedAuthors);
+                // 2. Parser l'Auteur imbriqué
+                if (bookJson.has("author") && !bookJson.isNull("author")) {
+                    final JSONObject authorJson = bookJson.getJSONObject("author");
+                    final int aId = authorJson.getInt("id");
 
-        } catch (final JSONException e) {
-            Log.e("LibraryRepository", "loadAuthorsFromJson: ", e);
-        }
-    }
-
-    private void loadDataFromJson(final String jsonString) {
-        final ArrayList<Author> parsedAuthors = new ArrayList<>();
-        final ArrayList<Book> parsedBooks = new ArrayList<>();
-
-        try {
-            final JSONObject rootObject = new JSONObject(jsonString);
-            final JSONArray authorsArray = rootObject.getJSONArray("authors");
-
-            for (int i = 0; i < authorsArray.length(); i++) {
-                final JSONObject authorJson = authorsArray.getJSONObject(i);
-
-                final int authorId = authorJson.getInt("id");
-                final String firstname = authorJson.getString("firstname");
-                final String lastname = authorJson.getString("lastname");
-
-                final ArrayList<Book> authorBooks = new ArrayList<>();
-                final JSONArray booksArray = authorJson.getJSONArray("books");
-
-                for (int j = 0; j < booksArray.length(); j++) {
-                    final JSONObject bookJson = booksArray.getJSONObject(j);
-
-                    final int bookId = bookJson.getInt("id");
-                    final String title = bookJson.getString("title");
-
-                    final Integer publicationYear = bookJson.has("publication_year") && !bookJson.isNull("publication_year")
-                            ? bookJson.getInt("publication_year")
-                            : null;
-
-                    final int bookAuthorId = bookJson.getInt("authorId");
-
-                    final ArrayList<Tag> bookTags = new ArrayList<>();
-                    final JSONArray tagsArray = bookJson.getJSONArray("tags");
-
-                    for (int k = 0; k < tagsArray.length(); k++) {
-                        final JSONObject tagJson = tagsArray.getJSONObject(k);
-                        final int tagId = tagJson.getInt("id");
-                        final String tagName = tagJson.getString("name");
-
-                        bookTags.add(new Tag(tagId, tagName));
+                    if (!authorBooksMap.containsKey(aId)) {
+                        authorBooksMap.put(aId, new ArrayList<>());
+                        authorJsonMap.put(aId, authorJson);
                     }
-
-                    final Book newBook = new Book(bookId, title, publicationYear, bookAuthorId, bookTags);
-                    authorBooks.add(newBook);
-                    parsedBooks.add(newBook);
+                    // On ajoute ce livre à la liste de cet auteur
+                    authorBooksMap.get(aId).add(book);
                 }
-
-                parsedAuthors.add(new Author(authorId, firstname, lastname, authorBooks));
             }
 
-            authorsLiveData.setValue(parsedAuthors);
-            booksLiveData.setValue(parsedBooks);
+            // 3. Créer la liste finale des auteurs uniques avec leurs livres respectifs
+            final ArrayList<Author> allAuthors = new ArrayList<>();
+            for (Integer aId : authorJsonMap.keySet()) {
+                final JSONObject aJson = authorJsonMap.get(aId);
+                allAuthors.add(new Author(
+                        aId,
+                        aJson.getString("firstname"),
+                        aJson.getString("lastname"),
+                        authorBooksMap.get(aId)
+                ));
+            }
+
+            // Mise à jour des LiveData
+            booksLiveData.postValue(allBooks);
+            authorsLiveData.postValue(allAuthors);
 
         } catch (final JSONException e) {
-            Log.e("LibraryRepository", "loadDataFromJson: ", e);
+            Log.e("LibraryRepository", "loadDataFromJson Error", e);
         }
     }
 
@@ -183,50 +100,26 @@ public class LibraryRepository {
         return authorsLiveData;
     }
 
-    public void fetchBooksFromAPI() {
+    public void fetchDataFromAPI() {
         API service = retrofit.create(API.class);
-        Call<ResponseBody> myRequest = service.getBooks();
+        // Appelle /books?include=author
+        Call<ResponseBody> myRequest = service.getData("author");
         myRequest.enqueue(new Callback<>() {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                if (response.isSuccessful()) {
+                if (response.isSuccessful() && response.body() != null) {
                     try {
-                        assert response.body() != null;
-                        JSONObject res = new JSONObject(response.body().string());
-                        loadBooksFromJson(res);
+                        JSONArray res = new JSONArray(response.body().string());
+                        loadDataFromJson(res);
                     } catch (IOException | JSONException e) {
-                        throw new RuntimeException(e);
+                        Log.e("fetchDataFromAPI", "Parsing error", e);
                     }
                 }
             }
 
             @Override
             public void onFailure(Call<ResponseBody> call, Throwable throwable) {
-                Log.e("fetchBooksFromAPI", "onFailure: ", throwable);
-            }
-        });
-    }
-
-    public void fetchAuthorsFromAPI() {
-        API service = retrofit.create(API.class);
-        Call<ResponseBody> myRequest = service.getAuthors();
-        myRequest.enqueue(new Callback<>() {
-            @Override
-            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                if (response.isSuccessful()) {
-                    try {
-                        assert response.body() != null;
-                        JSONObject res = new JSONObject(response.body().string());
-                        loadAuthorsFromJson(res);
-                    } catch (IOException | JSONException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            }
-
-            @Override
-            public void onFailure(Call<ResponseBody> call, Throwable throwable) {
-                Log.e("fetchAuthorsFromAPI", "onFailure: ", throwable);
+                Log.e("fetchDataFromAPI", "onFailure: ", throwable);
             }
         });
     }

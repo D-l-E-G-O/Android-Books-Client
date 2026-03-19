@@ -23,8 +23,7 @@ public class LibraryViewModel extends ViewModel {
     }
 
     public void loadDataFromAPI() {
-        repository.fetchBooksFromAPI();
-        repository.fetchAuthorsFromAPI();
+        repository.fetchDataFromAPI();
     }
 
     public void selectBook(final Book book) {
