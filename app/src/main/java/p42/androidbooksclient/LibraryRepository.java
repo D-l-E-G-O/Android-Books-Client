@@ -24,8 +24,8 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 
 public class LibraryRepository {
-    private final MutableLiveData<ArrayList<Book>> booksLiveData = new MutableLiveData<>();
-    private final MutableLiveData<ArrayList<Author>> authorsLiveData = new MutableLiveData<>();
+    private final MutableLiveData<ArrayList<Book>> booksLiveData = new MutableLiveData<>(new ArrayList<>());
+    private final MutableLiveData<ArrayList<Author>> authorsLiveData = new MutableLiveData<>(new ArrayList<>());
 
     private final Retrofit retrofit = new Retrofit.Builder()
             .baseUrl("http://10.0.2.2:3000/")
@@ -151,10 +151,16 @@ public class LibraryRepository {
             public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     try {
-                        JSONArray res = new JSONArray(response.body().string());
-                        int bookId = res.getInt(0);
+                        String responseString = response.body().string();
+                        JSONObject res = new JSONObject(responseString);
+                        int bookId = res.getInt("id");
                         Book newBook = new Book(bookId, title, publicationYear, authorId, new ArrayList<>());
-                        Objects.requireNonNull(booksLiveData.getValue()).add(newBook);
+                        
+                        ArrayList<Book> currentBooks = booksLiveData.getValue();
+                        if (currentBooks != null) {
+                            currentBooks.add(newBook);
+                            booksLiveData.postValue(currentBooks);
+                        }
                     } catch (IOException | JSONException e) {
                         Log.e("addBook", "Parsing error", e);
                     }
@@ -173,11 +179,11 @@ public class LibraryRepository {
         myRequest.enqueue(new Callback<>() {
             @Override
             public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    try {
-                        Objects.requireNonNull(booksLiveData.getValue()).removeIf(book -> (book.getId() == bookId));
-                    } catch (Exception e) {
-                        Log.e("deleteBook", "Delete error", e);
+                if (response.isSuccessful()) {
+                    ArrayList<Book> currentBooks = booksLiveData.getValue();
+                    if (currentBooks != null) {
+                        currentBooks.removeIf(book -> book.getId() == bookId);
+                        booksLiveData.postValue(currentBooks);
                     }
                 }
             }
@@ -209,13 +215,21 @@ public class LibraryRepository {
             public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     try {
-                        JSONArray res = new JSONArray(response.body().string());
-                        int authorId = res.getInt(0);
+                        String responseString = response.body().string();
+                        JSONObject res = new JSONObject(responseString);
+                        int authorId = res.getInt("id");
                         Author newAuthor = new Author(authorId, firstname, lastname, new ArrayList<>());
-                        Objects.requireNonNull(authorsLiveData.getValue()).add(newAuthor);
+                        
+                        ArrayList<Author> currentAuthors = authorsLiveData.getValue();
+                        if (currentAuthors != null) {
+                            currentAuthors.add(newAuthor);
+                            authorsLiveData.postValue(currentAuthors);
+                        }
                     } catch (IOException | JSONException e) {
                         Log.e("addAuthor", "Parsing error", e);
                     }
+                } else {
+                    Log.e("addAuthor", "Response not successful: " + response.code());
                 }
             }
 
@@ -231,12 +245,16 @@ public class LibraryRepository {
         myRequest.enqueue(new Callback<>() {
             @Override
             public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    try {
-                        Objects.requireNonNull(authorsLiveData.getValue()).removeIf(author -> (author.getId() == authorId));
-                        Objects.requireNonNull(booksLiveData.getValue()).removeIf(book -> (book.getAuthorId() == authorId));
-                    } catch (Exception e) {
-                        Log.e("deleteAuthor", "Delete error", e);
+                if (response.isSuccessful()) {
+                    ArrayList<Author> currentAuthors = authorsLiveData.getValue();
+                    if (currentAuthors != null) {
+                        currentAuthors.removeIf(author -> author.getId() == authorId);
+                        authorsLiveData.postValue(currentAuthors);
+                    }
+                    ArrayList<Book> currentBooks = booksLiveData.getValue();
+                    if (currentBooks != null) {
+                        currentBooks.removeIf(book -> book.getAuthorId() == authorId);
+                        booksLiveData.postValue(currentBooks);
                     }
                 }
             }
