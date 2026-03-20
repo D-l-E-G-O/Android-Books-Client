@@ -1,5 +1,6 @@
 package p42.androidbooksclient;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -17,6 +18,7 @@ import android.widget.Toast;
 public class BookDetailFragment extends Fragment {
 
     private LibraryViewModel viewModel;
+    private Book currentBook;
 
     public BookDetailFragment() {}
 
@@ -38,6 +40,7 @@ public class BookDetailFragment extends Fragment {
 
         viewModel.getSelectedBook().observe(getViewLifecycleOwner(), book -> {
             if (book != null) {
+                currentBook = book;
                 txtTitle.setText(book.getTitle());
                 txtYear.setText(book.getPublicationYear() != null ? "Publié en : " + book.getPublicationYear() : "Année inconnue");
 
@@ -57,8 +60,18 @@ public class BookDetailFragment extends Fragment {
         });
 
         btnDelete.setOnClickListener(v -> {
-            Toast.makeText(getContext(), "Livre supprimé", Toast.LENGTH_SHORT).show();
-            requireActivity().getSupportFragmentManager().popBackStack();
+            if (currentBook == null) return;
+
+            new AlertDialog.Builder(getContext())
+                    .setTitle("Confirmation de suppression")
+                    .setMessage("Voulez-vous vraiment supprimer ce livre ?")
+                    .setPositiveButton("Supprimer", (dialog, which) -> {
+                        viewModel.deleteBook(currentBook.getId());
+                        Toast.makeText(getContext(), "Livre supprimé", Toast.LENGTH_SHORT).show();
+                        requireActivity().getSupportFragmentManager().popBackStack();
+                    })
+                    .setNegativeButton("Annuler", null)
+                    .show();
         });
     }
 }

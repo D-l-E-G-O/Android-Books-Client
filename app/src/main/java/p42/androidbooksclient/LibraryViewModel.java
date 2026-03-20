@@ -49,4 +49,12 @@ public class LibraryViewModel extends ViewModel {
     public void addBook(final String title, final int publicationYear, final int authorId) {
         repository.addBook(title, publicationYear, authorId);
     }
+
+    public void deleteAuthor(final int authorId) {
+        repository.deleteAuthor(authorId);
+    }
+
+    public void deleteBook(final int bookId) {
+        repository.deleteBook(bookId);
+    }
 }

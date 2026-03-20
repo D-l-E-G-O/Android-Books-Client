@@ -1,5 +1,6 @@
 package p42.androidbooksclient;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -19,6 +20,7 @@ import android.widget.Toast;
 public class AuthorDetailFragment extends Fragment {
 
     private LibraryViewModel viewModel;
+    private Author currentAuthor;
     private BookAdapter adapter;
 
     public AuthorDetailFragment() {}
@@ -51,14 +53,25 @@ public class AuthorDetailFragment extends Fragment {
 
         viewModel.getSelectedAuthor().observe(getViewLifecycleOwner(), author -> {
             if (author != null) {
-                txtName.setText(author.getFirstname() + " " + author.getLastname());
+                currentAuthor = author;
+                txtName.setText(String.format("%s %s", author.getFirstname(), author.getLastname()));
                 adapter.updateBooks(author.getBooks());
             }
         });
 
         btnDelete.setOnClickListener(v -> {
-            Toast.makeText(getContext(), "Auteur supprimé", Toast.LENGTH_SHORT).show();
-            requireActivity().getSupportFragmentManager().popBackStack();
+            if (currentAuthor == null) return;
+
+            new AlertDialog.Builder(getContext())
+                    .setTitle("Confirmation de suppression")
+                    .setMessage("Voulez-vous vraiment supprimer cet auteur ? Cela supprimera également tous ses livres.")
+                    .setPositiveButton("Supprimer", (dialog, which) -> {
+                        viewModel.deleteAuthor(currentAuthor.getId());
+                        Toast.makeText(getContext(), "Auteur supprimé", Toast.LENGTH_SHORT).show();
+                        requireActivity().getSupportFragmentManager().popBackStack();
+                    })
+                    .setNegativeButton("Annuler", null)
+                    .show();
         });
     }
 }
