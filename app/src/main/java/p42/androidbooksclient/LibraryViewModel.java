@@ -45,4 +45,8 @@ public class LibraryViewModel extends ViewModel {
     public void addAuthor(final String firstname, final String lastname) {
         repository.addAuthor(firstname, lastname);
     }
+
+    public void addBook(final String title, final int publicationYear, final int authorId) {
+        repository.addBook(title, publicationYear, authorId);
+    }
 }
