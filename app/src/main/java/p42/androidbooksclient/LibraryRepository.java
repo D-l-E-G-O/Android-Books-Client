@@ -2,6 +2,7 @@ package p42.androidbooksclient;
 
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.lifecycle.MutableLiveData;
 
 import org.json.JSONArray;
@@ -71,7 +72,7 @@ public class LibraryRepository {
                         authorJsonMap.put(aId, authorJson);
                     }
                     // On ajoute ce livre à la liste de cet auteur
-                    authorBooksMap.get(aId).add(book);
+                    Objects.requireNonNull(authorBooksMap.get(aId)).add(book);
                 }
             }
 
@@ -79,12 +80,14 @@ public class LibraryRepository {
             final ArrayList<Author> allAuthors = new ArrayList<>();
             for (Integer aId : authorJsonMap.keySet()) {
                 final JSONObject aJson = authorJsonMap.get(aId);
-                allAuthors.add(new Author(
-                        aId,
-                        aJson.getString("firstname"),
-                        aJson.getString("lastname"),
-                        authorBooksMap.get(aId)
-                ));
+                if (aJson != null) {
+                    allAuthors.add(new Author(
+                            aId,
+                            aJson.getString("firstname"),
+                            aJson.getString("lastname"),
+                            authorBooksMap.get(aId)
+                    ));
+                }
             }
 
             // Mise à jour des LiveData
@@ -109,7 +112,7 @@ public class LibraryRepository {
         Call<ResponseBody> myRequest = service.getData("author");
         myRequest.enqueue(new Callback<>() {
             @Override
-            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+            public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     try {
                         JSONArray res = new JSONArray(response.body().string());
@@ -121,7 +124,7 @@ public class LibraryRepository {
             }
 
             @Override
-            public void onFailure(Call<ResponseBody> call, Throwable throwable) {
+            public void onFailure(@NonNull Call<ResponseBody> call, @NonNull Throwable throwable) {
                 Log.e("fetchDataFromAPI", "onFailure: ", throwable);
             }
         });
@@ -145,7 +148,7 @@ public class LibraryRepository {
 
         myRequest.enqueue(new Callback<>() {
             @Override
-            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+            public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     try {
                         JSONArray res = new JSONArray(response.body().string());
@@ -159,14 +162,31 @@ public class LibraryRepository {
             }
 
             @Override
-            public void onFailure(Call<ResponseBody> call, Throwable throwable) {
+            public void onFailure(@NonNull Call<ResponseBody> call, @NonNull Throwable throwable) {
                 Log.e("addBook", "onFailure: ", throwable);
             }
         });
     }
 
     public void deleteBook(final int bookId) {
-        Objects.requireNonNull(booksLiveData.getValue()).removeIf(book -> (book.getId() == bookId));
+        Call<ResponseBody> myRequest = service.deleteBook(bookId);
+        myRequest.enqueue(new Callback<>() {
+            @Override
+            public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    try {
+                        Objects.requireNonNull(booksLiveData.getValue()).removeIf(book -> (book.getId() == bookId));
+                    } catch (Exception e) {
+                        Log.e("deleteBook", "Delete error", e);
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ResponseBody> call, @NonNull Throwable throwable) {
+                Log.e("deleteBook", "onFailure: ", throwable);
+            }
+        });
     }
 
     public void addAuthor(final String firstname, final String lastname) {
@@ -186,7 +206,7 @@ public class LibraryRepository {
         Call<ResponseBody> myRequest = service.addAuthor(body);
         myRequest.enqueue(new Callback<>() {
             @Override
-            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+            public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     try {
                         JSONArray res = new JSONArray(response.body().string());
@@ -200,14 +220,31 @@ public class LibraryRepository {
             }
 
             @Override
-            public void onFailure(Call<ResponseBody> call, Throwable throwable) {
+            public void onFailure(@NonNull Call<ResponseBody> call, @NonNull Throwable throwable) {
                 Log.e("addAuthor", "onFailure: ", throwable);
             }
         });
     }
 
     public void deleteAuthor(final int authorId) {
-        Objects.requireNonNull(authorsLiveData.getValue()).removeIf(author -> (author.getId() == authorId));
-        Objects.requireNonNull(booksLiveData.getValue()).removeIf(book -> (book.getAuthorId() == authorId));
+        Call<ResponseBody> myRequest = service.deleteAuthor(authorId);
+        myRequest.enqueue(new Callback<>() {
+            @Override
+            public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    try {
+                        Objects.requireNonNull(authorsLiveData.getValue()).removeIf(author -> (author.getId() == authorId));
+                        Objects.requireNonNull(booksLiveData.getValue()).removeIf(book -> (book.getAuthorId() == authorId));
+                    } catch (Exception e) {
+                        Log.e("deleteAuthor", "Delete error", e);
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ResponseBody> call, @NonNull Throwable throwable) {
+                Log.e("deleteAuthor", "onFailure: ", throwable);
+            }
+        });
     }
 }
