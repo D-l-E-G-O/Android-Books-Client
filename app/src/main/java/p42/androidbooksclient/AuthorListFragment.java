@@ -12,7 +12,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
@@ -52,7 +51,10 @@ public class AuthorListFragment extends Fragment {
         recyclerView.setAdapter(adapter);
 
         final FloatingActionButton fab = view.findViewById(R.id.fabAuthorAdd);
-        fab.setOnClickListener(v -> Toast.makeText(getContext(), "Add Author Clicked", Toast.LENGTH_SHORT).show());
+        fab.setOnClickListener(v -> requireActivity().getSupportFragmentManager().beginTransaction()
+                .replace(R.id.fragmentContainerView, new AuthorAddFragment())
+                .addToBackStack(null)
+                .commit());
     }
 
     private void observeData() {

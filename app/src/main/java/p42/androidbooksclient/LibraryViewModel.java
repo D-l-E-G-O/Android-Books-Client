@@ -41,4 +41,8 @@ public class LibraryViewModel extends ViewModel {
     public LiveData<Author> getSelectedAuthor() {
         return selectedAuthor;
     }
+
+    public void addAuthor(final String firstname, final String lastname) {
+        repository.addAuthor(firstname, lastname);
+    }
 }
