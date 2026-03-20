@@ -15,6 +15,9 @@ public interface API {
     @GET("books")
     Call<ResponseBody> getData(@Query("include") String include);
 
+    @GET("authors")
+    Call<ResponseBody> getAuthors();
+
     @POST("authors/{author_id}/books")
     Call<ResponseBody> addBook(@Path("author_id") int authorId, @Body RequestBody body);
 
