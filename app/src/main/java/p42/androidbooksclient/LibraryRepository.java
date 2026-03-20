@@ -144,7 +144,7 @@ public class LibraryRepository {
                 MediaType.parse("application/json; charset=utf-8")
         );
 
-        Call<ResponseBody> myRequest = service.addBook(body);
+        Call<ResponseBody> myRequest = service.addBook(authorId, body);
 
         myRequest.enqueue(new Callback<>() {
             @Override

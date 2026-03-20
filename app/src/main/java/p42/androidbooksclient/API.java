@@ -15,15 +15,15 @@ public interface API {
     @GET("books")
     Call<ResponseBody> getData(@Query("include") String include);
 
-    @POST("book")
-    Call<ResponseBody> addBook(@Body RequestBody body);
+    @POST("authors/{author_id}/books")
+    Call<ResponseBody> addBook(@Path("author_id") int authorId, @Body RequestBody body);
 
-    @DELETE("book/{book_id}")
+    @DELETE("books/{book_id}")
     Call<ResponseBody> deleteBook(@Path("book_id") int bookId);
 
-    @POST("author")
+    @POST("authors")
     Call<ResponseBody> addAuthor(@Body RequestBody body);
 
-    @DELETE("author/{author_id}")
+    @DELETE("authors/{author_id}")
     Call<ResponseBody> deleteAuthor(@Path("author_id") int authorId);
 }
