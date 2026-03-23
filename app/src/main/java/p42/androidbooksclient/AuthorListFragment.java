@@ -17,7 +17,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 public class AuthorListFragment extends Fragment {
 
-    private LibraryViewModel viewModel;
+    private AuthorViewModel authorViewModel;
     private AuthorAdapter adapter;
 
     public AuthorListFragment() {
@@ -42,7 +42,7 @@ public class AuthorListFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         adapter = new AuthorAdapter(author -> {
-            viewModel.selectAuthor(author);
+            authorViewModel.selectAuthor(author);
             requireActivity().getSupportFragmentManager().beginTransaction()
                     .replace(R.id.fragmentContainerView, new AuthorDetailFragment())
                     .addToBackStack(null)
@@ -58,8 +58,7 @@ public class AuthorListFragment extends Fragment {
     }
 
     private void observeData() {
-        viewModel = new ViewModelProvider(requireActivity()).get(LibraryViewModel.class);
-
-        viewModel.observeAuthors().observe(getViewLifecycleOwner(), authors -> adapter.updateAuthors(authors));
+        authorViewModel = new ViewModelProvider(requireActivity()).get(AuthorViewModel.class);
+        authorViewModel.getAuthors().observe(getViewLifecycleOwner(), authors -> adapter.updateAuthors(authors));
     }
 }

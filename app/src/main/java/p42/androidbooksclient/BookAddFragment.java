@@ -12,6 +12,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.textfield.TextInputEditText;
@@ -21,7 +22,8 @@ import java.util.Objects;
 
 public class BookAddFragment extends Fragment {
 
-    private LibraryViewModel viewModel;
+    private BookViewModel bookViewModel;
+    private AuthorViewModel authorViewModel;
     private Spinner spinnerAuthors;
     private ArrayList<Author> authorsList = new ArrayList<>();
 
@@ -38,14 +40,15 @@ public class BookAddFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        viewModel = new ViewModelProvider(requireActivity()).get(LibraryViewModel.class);
+        bookViewModel = new ViewModelProvider(requireActivity()).get(BookViewModel.class);
+        authorViewModel = new ViewModelProvider(requireActivity()).get(AuthorViewModel.class);
 
         final TextInputEditText editTitle = view.findViewById(R.id.editBookTitle);
         final TextInputEditText editYear = view.findViewById(R.id.editPubYear);
         spinnerAuthors = view.findViewById(R.id.spinnerAuthors);
         final Button btnSave = view.findViewById(R.id.btnSaveBook);
 
-        viewModel.observeAuthors().observe(getViewLifecycleOwner(), authors -> {
+        authorViewModel.getAuthors().observe(getViewLifecycleOwner(), authors -> {
             this.authorsList = authors;
             ArrayList<String> authorNames = new ArrayList<>();
             for (Author a : authors) {
@@ -69,7 +72,7 @@ public class BookAddFragment extends Fragment {
             int year = Integer.parseInt(yearStr);
             int authorId = authorsList.get(selectedAuthorIndex).getId();
 
-            viewModel.addBook(title, year, authorId);
+            bookViewModel.addBook(title, year, authorId, (MutableLiveData<ArrayList<Author>>) authorViewModel.getAuthors());
             requireActivity().getSupportFragmentManager().popBackStack();
         });
     }

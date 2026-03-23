@@ -6,6 +6,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProvider;
 
 import android.view.LayoutInflater;
@@ -15,9 +16,12 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+
 public class BookDetailFragment extends Fragment {
 
-    private LibraryViewModel viewModel;
+    private BookViewModel bookViewModel;
+    private AuthorViewModel authorViewModel;
     private Book currentBook;
 
     public BookDetailFragment() {}
@@ -36,9 +40,10 @@ public class BookDetailFragment extends Fragment {
         final TextView txtTags = view.findViewById(R.id.txtDetailTags);
         final Button btnDelete = view.findViewById(R.id.btnDeleteBook);
 
-        viewModel = new ViewModelProvider(requireActivity()).get(LibraryViewModel.class);
+        bookViewModel = new ViewModelProvider(requireActivity()).get(BookViewModel.class);
+        authorViewModel = new ViewModelProvider(requireActivity()).get(AuthorViewModel.class);
 
-        viewModel.getSelectedBook().observe(getViewLifecycleOwner(), book -> {
+        bookViewModel.getSelectedBook().observe(getViewLifecycleOwner(), book -> {
             if (book != null) {
                 currentBook = book;
                 txtTitle.setText(book.getTitle());
@@ -66,7 +71,7 @@ public class BookDetailFragment extends Fragment {
                     .setTitle("Confirmation de suppression")
                     .setMessage("Voulez-vous vraiment supprimer ce livre ?")
                     .setPositiveButton("Supprimer", (dialog, which) -> {
-                        viewModel.deleteBook(currentBook.getId());
+                        bookViewModel.deleteBook(currentBook.getId(), (MutableLiveData<ArrayList<Author>>) authorViewModel.getAuthors());
                         Toast.makeText(getContext(), "Livre supprimé", Toast.LENGTH_SHORT).show();
                         requireActivity().getSupportFragmentManager().popBackStack();
                     })

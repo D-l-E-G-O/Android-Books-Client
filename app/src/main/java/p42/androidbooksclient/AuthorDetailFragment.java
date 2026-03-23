@@ -6,6 +6,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -17,9 +18,12 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+
 public class AuthorDetailFragment extends Fragment {
 
-    private LibraryViewModel viewModel;
+    private AuthorViewModel authorViewModel;
+    private BookViewModel bookViewModel;
     private Author currentAuthor;
     private BookAdapter adapter;
 
@@ -40,10 +44,11 @@ public class AuthorDetailFragment extends Fragment {
 
         recyclerBooks.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        viewModel = new ViewModelProvider(requireActivity()).get(LibraryViewModel.class);
+        authorViewModel = new ViewModelProvider(requireActivity()).get(AuthorViewModel.class);
+        bookViewModel = new ViewModelProvider(requireActivity()).get(BookViewModel.class);
 
         adapter = new BookAdapter(book -> {
-            viewModel.selectBook(book);
+            bookViewModel.selectBook(book);
             requireActivity().getSupportFragmentManager().beginTransaction()
                     .replace(R.id.fragmentContainerView, new BookDetailFragment())
                     .addToBackStack(null)
@@ -51,7 +56,7 @@ public class AuthorDetailFragment extends Fragment {
         });
         recyclerBooks.setAdapter(adapter);
 
-        viewModel.getSelectedAuthor().observe(getViewLifecycleOwner(), author -> {
+        authorViewModel.getSelectedAuthor().observe(getViewLifecycleOwner(), author -> {
             if (author != null) {
                 currentAuthor = author;
                 txtName.setText(String.format("%s %s", author.getFirstname(), author.getLastname()));
@@ -66,7 +71,7 @@ public class AuthorDetailFragment extends Fragment {
                     .setTitle("Confirmation de suppression")
                     .setMessage("Voulez-vous vraiment supprimer cet auteur ? Cela supprimera également tous ses livres.")
                     .setPositiveButton("Supprimer", (dialog, which) -> {
-                        viewModel.deleteAuthor(currentAuthor.getId());
+                        authorViewModel.deleteAuthor(currentAuthor.getId(), (MutableLiveData<ArrayList<Book>>) bookViewModel.getBooks(null));
                         Toast.makeText(getContext(), "Auteur supprimé", Toast.LENGTH_SHORT).show();
                         requireActivity().getSupportFragmentManager().popBackStack();
                     })

@@ -18,7 +18,7 @@ import java.util.Objects;
 
 public class AuthorAddFragment extends Fragment {
 
-    private LibraryViewModel viewModel;
+    private AuthorViewModel authorViewModel;
 
     public AuthorAddFragment() {
         // Required empty public constructor
@@ -33,7 +33,7 @@ public class AuthorAddFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        viewModel = new ViewModelProvider(requireActivity()).get(LibraryViewModel.class);
+        authorViewModel = new ViewModelProvider(requireActivity()).get(AuthorViewModel.class);
 
         final TextInputEditText editFirstname = view.findViewById(R.id.editFirstname);
         final TextInputEditText editLastname = view.findViewById(R.id.editLastname);
@@ -48,7 +48,7 @@ public class AuthorAddFragment extends Fragment {
                 return;
             }
 
-            viewModel.addAuthor(firstname, lastname);
+            authorViewModel.addAuthor(firstname, lastname);
             requireActivity().getSupportFragmentManager().popBackStack();
         });
     }

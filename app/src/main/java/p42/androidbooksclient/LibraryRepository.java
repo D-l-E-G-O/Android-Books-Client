@@ -23,38 +23,32 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 
 public class LibraryRepository {
-    private final MutableLiveData<ArrayList<Book>> booksLiveData = new MutableLiveData<>(new ArrayList<>());
-    private final MutableLiveData<ArrayList<Author>> authorsLiveData = new MutableLiveData<>(new ArrayList<>());
-
     private final Retrofit retrofit = new Retrofit.Builder()
             .baseUrl("http://10.0.2.2:3000/")
             .build();
 
     private final API service = retrofit.create(API.class);
 
-    private void loadDataFromJsons(final JSONArray authorsArray, final JSONArray booksArray) {
+    private void loadDataFromJsons(final JSONArray authorsArray, final JSONArray booksArray, 
+                                   final MutableLiveData<ArrayList<Author>> authorsLiveData, 
+                                   final MutableLiveData<ArrayList<Book>> booksLiveData) {
         final ArrayList<Author> allAuthors = new ArrayList<>();
         final ArrayList<Book> allBooks = new ArrayList<>();
         final Map<Integer, Author> authorMap = new HashMap<>();
 
         try {
-            // 1. Parser d'abord tous les auteurs du JSON "authors"
             for (int i = 0; i < authorsArray.length(); i++) {
                 JSONObject authorJson = authorsArray.getJSONObject(i);
                 int id = authorJson.getInt("id");
                 String firstname = authorJson.getString("firstname");
                 String lastname = authorJson.getString("lastname");
-                
-                // On initialise l'auteur avec une liste de livres vide
                 Author author = new Author(id, firstname, lastname, new ArrayList<>());
                 allAuthors.add(author);
                 authorMap.put(id, author);
             }
 
-            // 2. Parser les livres du JSON "books" et les lier aux auteurs
             for (int i = 0; i < booksArray.length(); i++) {
                 JSONObject bookJson = booksArray.getJSONObject(i);
-                
                 int bookId = bookJson.getInt("id");
                 String title = bookJson.getString("title");
                 Integer pubYear = bookJson.has("publication_year") && !bookJson.isNull("publication_year")
@@ -73,206 +67,114 @@ public class LibraryRepository {
                 Book book = new Book(bookId, title, pubYear, authorId, bookTags);
                 allBooks.add(book);
 
-                // Liaison avec l'auteur
                 Author author = authorMap.get(authorId);
                 if (author != null) {
                     author.getBooks().add(book);
                 }
             }
 
-            // Mise à jour des LiveData
-            booksLiveData.postValue(allBooks);
-            authorsLiveData.postValue(allAuthors);
+            if (authorsLiveData != null) authorsLiveData.postValue(allAuthors);
+            if (booksLiveData != null) booksLiveData.postValue(allBooks);
 
         } catch (final JSONException e) {
             Log.e("LibraryRepository", "loadDataFromJsons Error", e);
         }
     }
 
-    public MutableLiveData<ArrayList<Book>> fetchBooks() {
-        return booksLiveData;
+    public void fetchAuthors(final MutableLiveData<ArrayList<Author>> authorsLiveData) {
+        service.getAuthors().enqueue(new Callback<>() {
+            @Override
+            public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    try {
+                        JSONArray authorsJson = new JSONArray(response.body().string());
+                        ArrayList<Author> allAuthors = new ArrayList<>();
+                        for (int i = 0; i < authorsJson.length(); i++) {
+                            JSONObject a = authorsJson.getJSONObject(i);
+                            allAuthors.add(new Author(a.getInt("id"), a.getString("firstname"), a.getString("lastname"), new ArrayList<>()));
+                        }
+                        authorsLiveData.postValue(allAuthors);
+                    } catch (IOException | JSONException e) {
+                        Log.e("fetchAuthors", "Error", e);
+                    }
+                }
+            }
+            @Override
+            public void onFailure(@NonNull Call<ResponseBody> call, @NonNull Throwable t) {
+                Log.e("fetchAuthors", "onFailure", t);
+            }
+        });
     }
 
-    public MutableLiveData<ArrayList<Author>> fetchAuthors() {
-        return authorsLiveData;
-    }
-
-
-    public void fetchDataFromAPI() {
+    public void fetchBooks(final MutableLiveData<ArrayList<Book>> booksLiveData, final MutableLiveData<ArrayList<Author>> authorsLiveData) {
         service.getAuthors().enqueue(new Callback<>() {
             @Override
             public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> responseAuthors) {
                 if (responseAuthors.isSuccessful() && responseAuthors.body() != null) {
                     try {
-                        String authorsStr = responseAuthors.body().string();
-                        final JSONArray authorsJson = new JSONArray(authorsStr);
-
-                        // Une fois les auteurs récupérés, on récupère les livres
+                        final JSONArray authorsJson = new JSONArray(responseAuthors.body().string());
                         service.getData("author").enqueue(new Callback<>() {
                             @Override
                             public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> responseBooks) {
                                 if (responseBooks.isSuccessful() && responseBooks.body() != null) {
                                     try {
                                         JSONArray booksJson = new JSONArray(responseBooks.body().string());
-                                        loadDataFromJsons(authorsJson, booksJson);
+                                        loadDataFromJsons(authorsJson, booksJson, authorsLiveData, booksLiveData);
                                     } catch (IOException | JSONException e) {
-                                        Log.e("fetchDataFromAPI", "Parsing books error", e);
+                                        Log.e("fetchBooks", "Error", e);
                                     }
                                 }
                             }
-
                             @Override
-                            public void onFailure(@NonNull Call<ResponseBody> call, @NonNull Throwable throwable) {
-                                Log.e("fetchDataFromAPI", "Books onFailure", throwable);
+                            public void onFailure(@NonNull Call<ResponseBody> call, @NonNull Throwable t) {
+                                Log.e("fetchBooks", "Books onFailure", t);
                             }
                         });
                     } catch (IOException | JSONException e) {
-                        Log.e("fetchDataFromAPI", "Parsing authors error", e);
+                        Log.e("fetchBooks", "Authors error", e);
                     }
                 }
             }
-
             @Override
-            public void onFailure(@NonNull Call<ResponseBody> call, @NonNull Throwable throwable) {
-                Log.e("fetchDataFromAPI", "Authors onFailure", throwable);
+            public void onFailure(@NonNull Call<ResponseBody> call, @NonNull Throwable t) {
+                Log.e("fetchBooks", "Authors onFailure", t);
             }
         });
     }
 
-    public void addBook(final String title, final int publicationYear, final int authorId) {
-        JSONObject json = new JSONObject();
-        try {
-            json.put("title", title);
-            json.put("publication_year", publicationYear);
-        } catch (JSONException e) {
-            throw new RuntimeException(e);
-        }
-
-        RequestBody body = RequestBody.create(
-                json.toString(),
-                MediaType.parse("application/json; charset=utf-8")
-        );
-
-        service.addBook(authorId, body).enqueue(new Callback<>() {
-            @Override
-            public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    try {
-                        JSONObject resJson = new JSONObject(response.body().string());
-                        int id = resJson.getInt("id");
-                        Book newBook = new Book(id, title, publicationYear, authorId, new ArrayList<>());
-                        
-                        ArrayList<Book> currentBooks = booksLiveData.getValue();
-                        if (currentBooks != null) {
-                            currentBooks.add(newBook);
-                            booksLiveData.postValue(currentBooks);
-                        }
-
-                        ArrayList<Author> currentAuthors = authorsLiveData.getValue();
-                        if (currentAuthors != null) {
-                            for (Author a : currentAuthors) {
-                                if (a.getId() == authorId) {
-                                    a.getBooks().add(newBook);
-                                    authorsLiveData.postValue(currentAuthors);
-                                    break;
-                                }
-                            }
-                        }
-                    } catch (IOException | JSONException e) {
-                        Log.e("addBook", "Parsing error", e);
-                    }
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<ResponseBody> call, @NonNull Throwable throwable) {
-                Log.e("addBook", "onFailure", throwable);
-            }
-        });
-    }
-
-    public void deleteBook(final int bookId) {
-        service.deleteBook(bookId).enqueue(new Callback<>() {
-            @Override
-            public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
-                if (response.isSuccessful()) {
-                    ArrayList<Book> currentBooks = booksLiveData.getValue();
-                    if (currentBooks != null) {
-                        Book bookToRemove = null;
-                        for (Book b : currentBooks) {
-                            if (b.getId() == bookId) {
-                                bookToRemove = b;
-                                break;
-                            }
-                        }
-                        if (bookToRemove != null) {
-                            currentBooks.remove(bookToRemove);
-                            booksLiveData.postValue(currentBooks);
-
-                            ArrayList<Author> currentAuthors = authorsLiveData.getValue();
-                            if (currentAuthors != null) {
-                                for (Author a : currentAuthors) {
-                                    if (a.getId() == bookToRemove.getAuthorId()) {
-                                        a.getBooks().removeIf(b -> b.getId() == bookId);
-                                        authorsLiveData.postValue(currentAuthors);
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<ResponseBody> call, @NonNull Throwable throwable) {
-                Log.e("deleteBook", "onFailure", throwable);
-            }
-        });
-    }
-
-    public void addAuthor(final String firstname, final String lastname) {
+    public void addAuthor(final String firstname, final String lastname, final MutableLiveData<ArrayList<Author>> authorsLiveData) {
         JSONObject json = new JSONObject();
         try {
             json.put("firstname", firstname);
             json.put("lastname", lastname);
-        } catch (JSONException e) {
-            throw new RuntimeException(e);
-        }
+        } catch (JSONException e) { return; }
 
-        RequestBody body = RequestBody.create(
-                json.toString(),
-                MediaType.parse("application/json; charset=utf-8")
-        );
-
+        RequestBody body = RequestBody.create(json.toString(), MediaType.parse("application/json; charset=utf-8"));
         service.addAuthor(body).enqueue(new Callback<>() {
             @Override
             public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     try {
                         JSONObject resJson = new JSONObject(response.body().string());
-                        int id = resJson.getInt("id");
-                        Author newAuthor = new Author(id, firstname, lastname, new ArrayList<>());
-                        
-                        ArrayList<Author> currentAuthors = authorsLiveData.getValue();
-                        if (currentAuthors != null) {
-                            currentAuthors.add(newAuthor);
-                            authorsLiveData.postValue(currentAuthors);
+                        Author newAuthor = new Author(resJson.getInt("id"), firstname, lastname, new ArrayList<>());
+                        ArrayList<Author> current = authorsLiveData.getValue();
+                        if (current != null) {
+                            current.add(newAuthor);
+                            authorsLiveData.postValue(current);
                         }
                     } catch (IOException | JSONException e) {
-                        Log.e("addAuthor", "Parsing error", e);
+                        Log.e("addAuthor", "Error", e);
                     }
                 }
             }
-
             @Override
-            public void onFailure(@NonNull Call<ResponseBody> call, @NonNull Throwable throwable) {
-                Log.e("addAuthor", "onFailure", throwable);
+            public void onFailure(@NonNull Call<ResponseBody> call, @NonNull Throwable t) {
+                Log.e("addAuthor", "onFailure", t);
             }
         });
     }
 
-    public void deleteAuthor(final int authorId) {
+    public void deleteAuthor(final int authorId, final MutableLiveData<ArrayList<Author>> authorsLiveData, final MutableLiveData<ArrayList<Book>> booksLiveData) {
         service.deleteAuthor(authorId).enqueue(new Callback<>() {
             @Override
             public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
@@ -282,17 +184,98 @@ public class LibraryRepository {
                         currentAuthors.removeIf(a -> a.getId() == authorId);
                         authorsLiveData.postValue(currentAuthors);
                     }
-                    ArrayList<Book> currentBooks = booksLiveData.getValue();
-                    if (currentBooks != null) {
-                        currentBooks.removeIf(b -> b.getAuthorId() == authorId);
-                        booksLiveData.postValue(currentBooks);
+                    if (booksLiveData != null) {
+                        ArrayList<Book> currentBooks = booksLiveData.getValue();
+                        if (currentBooks != null) {
+                            currentBooks.removeIf(b -> b.getAuthorId() == authorId);
+                            booksLiveData.postValue(currentBooks);
+                        }
                     }
                 }
             }
-
             @Override
-            public void onFailure(@NonNull Call<ResponseBody> call, @NonNull Throwable throwable) {
-                Log.e("deleteAuthor", "onFailure", throwable);
+            public void onFailure(@NonNull Call<ResponseBody> call, @NonNull Throwable t) {
+                Log.e("deleteAuthor", "onFailure", t);
+            }
+        });
+    }
+
+    public void addBook(final String title, final int publicationYear, final int authorId, final MutableLiveData<ArrayList<Book>> booksLiveData, final MutableLiveData<ArrayList<Author>> authorsLiveData) {
+        JSONObject json = new JSONObject();
+        try {
+            json.put("title", title);
+            json.put("publication_year", publicationYear);
+        } catch (JSONException e) { return; }
+
+        RequestBody body = RequestBody.create(json.toString(), MediaType.parse("application/json; charset=utf-8"));
+        service.addBook(authorId, body).enqueue(new Callback<>() {
+            @Override
+            public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    try {
+                        JSONObject resJson = new JSONObject(response.body().string());
+                        Book newBook = new Book(resJson.getInt("id"), title, publicationYear, authorId, new ArrayList<>());
+                        
+                        ArrayList<Book> currentBooks = booksLiveData.getValue();
+                        if (currentBooks != null) {
+                            currentBooks.add(newBook);
+                            booksLiveData.postValue(currentBooks);
+                        }
+                        if (authorsLiveData != null) {
+                            ArrayList<Author> currentAuthors = authorsLiveData.getValue();
+                            if (currentAuthors != null) {
+                                for (Author a : currentAuthors) {
+                                    if (a.getId() == authorId) {
+                                        a.getBooks().add(newBook);
+                                        authorsLiveData.postValue(currentAuthors);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    } catch (IOException | JSONException e) {
+                        Log.e("addBook", "Error", e);
+                    }
+                }
+            }
+            @Override
+            public void onFailure(@NonNull Call<ResponseBody> call, @NonNull Throwable t) {
+                Log.e("addBook", "onFailure", t);
+            }
+        });
+    }
+
+    public void deleteBook(final int bookId, final MutableLiveData<ArrayList<Book>> booksLiveData, final MutableLiveData<ArrayList<Author>> authorsLiveData) {
+        service.deleteBook(bookId).enqueue(new Callback<>() {
+            @Override
+            public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
+                if (response.isSuccessful()) {
+                    ArrayList<Book> currentBooks = booksLiveData.getValue();
+                    if (currentBooks != null) {
+                        Book removed = null;
+                        for (Book b : currentBooks) { if (b.getId() == bookId) { removed = b; break; } }
+                        if (removed != null) {
+                            currentBooks.remove(removed);
+                            booksLiveData.postValue(currentBooks);
+                            if (authorsLiveData != null) {
+                                ArrayList<Author> currentAuthors = authorsLiveData.getValue();
+                                if (currentAuthors != null) {
+                                    for (Author a : currentAuthors) {
+                                        if (a.getId() == removed.getAuthorId()) {
+                                            a.getBooks().removeIf(b -> b.getId() == bookId);
+                                            authorsLiveData.postValue(currentAuthors);
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            @Override
+            public void onFailure(@NonNull Call<ResponseBody> call, @NonNull Throwable t) {
+                Log.e("deleteBook", "onFailure", t);
             }
         });
     }

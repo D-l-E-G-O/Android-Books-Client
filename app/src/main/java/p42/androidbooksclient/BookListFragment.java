@@ -19,7 +19,8 @@ import java.util.ArrayList;
 
 public class BookListFragment extends Fragment {
 
-    private LibraryViewModel viewModel;
+    private BookViewModel bookViewModel;
+    private AuthorViewModel authorViewModel;
     private BookAdapter adapter;
 
     public BookListFragment() {
@@ -44,7 +45,7 @@ public class BookListFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         adapter = new BookAdapter(book -> {
-            viewModel.selectBook(book);
+            bookViewModel.selectBook(book);
             requireActivity().getSupportFragmentManager().beginTransaction()
                     .replace(R.id.fragmentContainerView, new BookDetailFragment())
                     .addToBackStack(null)
@@ -60,9 +61,12 @@ public class BookListFragment extends Fragment {
     }
 
     private void observeData() {
-        viewModel = new ViewModelProvider(requireActivity()).get(LibraryViewModel.class);
+        bookViewModel = new ViewModelProvider(requireActivity()).get(BookViewModel.class);
+        authorViewModel = new ViewModelProvider(requireActivity()).get(AuthorViewModel.class);
 
-        viewModel.observeBooks().observe(getViewLifecycleOwner(),
+        // On a besoin du LiveData des auteurs pour que le repo puisse faire la liaison lors du fetchBooks
+        // On récupère donc d'abord le LiveData de AuthorViewModel (qui peut être vide au début)
+        bookViewModel.getBooks((androidx.lifecycle.MutableLiveData<ArrayList<Author>>) authorViewModel.getAuthors()).observe(getViewLifecycleOwner(),
                 books -> adapter.updateBooks(new ArrayList<>(books)));
     }
 }
