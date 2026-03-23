@@ -36,6 +36,7 @@ public class BookDetailFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         final TextView txtTitle = view.findViewById(R.id.txtDetailTitle);
+        final TextView txtAuthor = view.findViewById(R.id.txtDetailAuthor);
         final TextView txtYear = view.findViewById(R.id.txtDetailYear);
         final TextView txtTags = view.findViewById(R.id.txtDetailTags);
         final Button btnDelete = view.findViewById(R.id.btnDeleteBook);
@@ -48,6 +49,16 @@ public class BookDetailFragment extends Fragment {
                 currentBook = book;
                 txtTitle.setText(book.getTitle());
                 txtYear.setText(book.getPublicationYear() != null ? "Publié en : " + book.getPublicationYear() : "Année inconnue");
+
+                // Find author name from AuthorViewModel
+                authorViewModel.getAuthors().observe(getViewLifecycleOwner(), authors -> {
+                    for (Author a : authors) {
+                        if (a.getId() == book.getAuthorId()) {
+                            txtAuthor.setText(String.format("Par %s %s", a.getFirstname(), a.getLastname()));
+                            break;
+                        }
+                    }
+                });
 
                 StringBuilder tagsString = new StringBuilder("Tags : ");
                 if (book.getTags() != null && !book.getTags().isEmpty()) {

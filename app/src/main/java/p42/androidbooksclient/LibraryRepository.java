@@ -142,6 +142,31 @@ public class LibraryRepository {
         });
     }
 
+    public void fetchTags(final MutableLiveData<ArrayList<Tag>> tagsLiveData) {
+        service.getTags().enqueue(new Callback<>() {
+            @Override
+            public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    try {
+                        JSONArray tagsJson = new JSONArray(response.body().string());
+                        ArrayList<Tag> allTags = new ArrayList<>();
+                        for (int i = 0; i < tagsJson.length(); i++) {
+                            JSONObject t = tagsJson.getJSONObject(i);
+                            allTags.add(new Tag(t.getInt("id"), t.getString("name")));
+                        }
+                        tagsLiveData.postValue(allTags);
+                    } catch (IOException | JSONException e) {
+                        Log.e("fetchTags", "Error", e);
+                    }
+                }
+            }
+            @Override
+            public void onFailure(@NonNull Call<ResponseBody> call, @NonNull Throwable t) {
+                Log.e("fetchTags", "onFailure", t);
+            }
+        });
+    }
+
     public void addAuthor(final String firstname, final String lastname, final MutableLiveData<ArrayList<Author>> authorsLiveData) {
         JSONObject json = new JSONObject();
         try {
@@ -200,11 +225,14 @@ public class LibraryRepository {
         });
     }
 
-    public void addBook(final String title, final int publicationYear, final int authorId, final MutableLiveData<ArrayList<Book>> booksLiveData, final MutableLiveData<ArrayList<Author>> authorsLiveData) {
+    public void addBook(final String title, final int publicationYear, final int authorId, final ArrayList<Integer> tagIds, final MutableLiveData<ArrayList<Book>> booksLiveData, final MutableLiveData<ArrayList<Author>> authorsLiveData) {
         JSONObject json = new JSONObject();
         try {
             json.put("title", title);
             json.put("publication_year", publicationYear);
+            if (tagIds != null && !tagIds.isEmpty()) {
+                json.put("tagIds", new JSONArray(tagIds));
+            }
         } catch (JSONException e) { return; }
 
         RequestBody body = RequestBody.create(json.toString(), MediaType.parse("application/json; charset=utf-8"));

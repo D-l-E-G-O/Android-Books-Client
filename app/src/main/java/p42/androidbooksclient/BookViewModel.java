@@ -28,8 +28,8 @@ public class BookViewModel extends ViewModel {
         return selectedBook;
     }
 
-    public void addBook(String title, int year, int authorId, MutableLiveData<ArrayList<Author>> authorsLiveData) {
-        repository.addBook(title, year, authorId, books, authorsLiveData);
+    public void addBook(String title, int year, int authorId, ArrayList<Integer> tagIds, MutableLiveData<ArrayList<Author>> authorsLiveData) {
+        repository.addBook(title, year, authorId, tagIds, books, authorsLiveData);
     }
 
     public void deleteBook(int bookId, MutableLiveData<ArrayList<Author>> authorsLiveData) {

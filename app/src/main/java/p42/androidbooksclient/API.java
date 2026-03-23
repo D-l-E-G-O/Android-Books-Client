@@ -18,6 +18,9 @@ public interface API {
     @GET("authors")
     Call<ResponseBody> getAuthors();
 
+    @GET("tags")
+    Call<ResponseBody> getTags();
+
     @POST("authors/{author_id}/books")
     Call<ResponseBody> addBook(@Path("author_id") int authorId, @Body RequestBody body);
 
