@@ -156,9 +156,31 @@ public class LibraryRepository {
         service.addBook(authorId, body).enqueue(new Callback<>() {
             @Override
             public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
-                if (response.isSuccessful()) {
-                    // On rafraîchit tout pour maintenir la cohérence des listes
-                    fetchDataFromAPI();
+                if (response.isSuccessful() && response.body() != null) {
+                    try {
+                        JSONObject resJson = new JSONObject(response.body().string());
+                        int id = resJson.getInt("id");
+                        Book newBook = new Book(id, title, publicationYear, authorId, new ArrayList<>());
+                        
+                        ArrayList<Book> currentBooks = booksLiveData.getValue();
+                        if (currentBooks != null) {
+                            currentBooks.add(newBook);
+                            booksLiveData.postValue(currentBooks);
+                        }
+
+                        ArrayList<Author> currentAuthors = authorsLiveData.getValue();
+                        if (currentAuthors != null) {
+                            for (Author a : currentAuthors) {
+                                if (a.getId() == authorId) {
+                                    a.getBooks().add(newBook);
+                                    authorsLiveData.postValue(currentAuthors);
+                                    break;
+                                }
+                            }
+                        }
+                    } catch (IOException | JSONException e) {
+                        Log.e("addBook", "Parsing error", e);
+                    }
                 }
             }
 
@@ -174,7 +196,31 @@ public class LibraryRepository {
             @Override
             public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
                 if (response.isSuccessful()) {
-                    fetchDataFromAPI();
+                    ArrayList<Book> currentBooks = booksLiveData.getValue();
+                    if (currentBooks != null) {
+                        Book bookToRemove = null;
+                        for (Book b : currentBooks) {
+                            if (b.getId() == bookId) {
+                                bookToRemove = b;
+                                break;
+                            }
+                        }
+                        if (bookToRemove != null) {
+                            currentBooks.remove(bookToRemove);
+                            booksLiveData.postValue(currentBooks);
+
+                            ArrayList<Author> currentAuthors = authorsLiveData.getValue();
+                            if (currentAuthors != null) {
+                                for (Author a : currentAuthors) {
+                                    if (a.getId() == bookToRemove.getAuthorId()) {
+                                        a.getBooks().removeIf(b -> b.getId() == bookId);
+                                        authorsLiveData.postValue(currentAuthors);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -202,8 +248,20 @@ public class LibraryRepository {
         service.addAuthor(body).enqueue(new Callback<>() {
             @Override
             public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
-                if (response.isSuccessful()) {
-                    fetchDataFromAPI();
+                if (response.isSuccessful() && response.body() != null) {
+                    try {
+                        JSONObject resJson = new JSONObject(response.body().string());
+                        int id = resJson.getInt("id");
+                        Author newAuthor = new Author(id, firstname, lastname, new ArrayList<>());
+                        
+                        ArrayList<Author> currentAuthors = authorsLiveData.getValue();
+                        if (currentAuthors != null) {
+                            currentAuthors.add(newAuthor);
+                            authorsLiveData.postValue(currentAuthors);
+                        }
+                    } catch (IOException | JSONException e) {
+                        Log.e("addAuthor", "Parsing error", e);
+                    }
                 }
             }
 
@@ -219,7 +277,16 @@ public class LibraryRepository {
             @Override
             public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
                 if (response.isSuccessful()) {
-                    fetchDataFromAPI();
+                    ArrayList<Author> currentAuthors = authorsLiveData.getValue();
+                    if (currentAuthors != null) {
+                        currentAuthors.removeIf(a -> a.getId() == authorId);
+                        authorsLiveData.postValue(currentAuthors);
+                    }
+                    ArrayList<Book> currentBooks = booksLiveData.getValue();
+                    if (currentBooks != null) {
+                        currentBooks.removeIf(b -> b.getAuthorId() == authorId);
+                        booksLiveData.postValue(currentBooks);
+                    }
                 }
             }
 
