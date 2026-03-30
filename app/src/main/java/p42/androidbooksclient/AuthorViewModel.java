@@ -16,7 +16,7 @@ public class AuthorViewModel extends ViewModel {
     }
 
     public LiveData<ArrayList<Author>> getAuthors() {
-        repository.fetchAuthors(authors);
+        repository.fetchBooks(null,authors);
         return authors;
     }
 

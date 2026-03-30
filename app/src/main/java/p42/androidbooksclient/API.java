@@ -32,4 +32,7 @@ public interface API {
 
     @DELETE("authors/{author_id}")
     Call<ResponseBody> deleteAuthor(@Path("author_id") int authorId);
+
+    @POST("books/{book_id}/tags/{tag_id}")
+    Call<ResponseBody> addTagToBook(@Path("book_id") int bookId, @Path("tag_id") int tagId);
 }

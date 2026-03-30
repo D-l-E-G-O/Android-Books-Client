@@ -80,31 +80,7 @@ public class LibraryRepository {
             Log.e("LibraryRepository", "loadDataFromJsons Error", e);
         }
     }
-
-    public void fetchAuthors(final MutableLiveData<ArrayList<Author>> authorsLiveData) {
-        service.getAuthors().enqueue(new Callback<>() {
-            @Override
-            public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    try {
-                        JSONArray authorsJson = new JSONArray(response.body().string());
-                        ArrayList<Author> allAuthors = new ArrayList<>();
-                        for (int i = 0; i < authorsJson.length(); i++) {
-                            JSONObject a = authorsJson.getJSONObject(i);
-                            allAuthors.add(new Author(a.getInt("id"), a.getString("firstname"), a.getString("lastname"), new ArrayList<>()));
-                        }
-                        authorsLiveData.postValue(allAuthors);
-                    } catch (IOException | JSONException e) {
-                        Log.e("fetchAuthors", "Error", e);
-                    }
-                }
-            }
-            @Override
-            public void onFailure(@NonNull Call<ResponseBody> call, @NonNull Throwable t) {
-                Log.e("fetchAuthors", "onFailure", t);
-            }
-        });
-    }
+    
 
     public void fetchBooks(final MutableLiveData<ArrayList<Book>> booksLiveData, final MutableLiveData<ArrayList<Author>> authorsLiveData) {
         service.getAuthors().enqueue(new Callback<>() {
@@ -230,48 +206,42 @@ public class LibraryRepository {
         try {
             json.put("title", title);
             json.put("publication_year", publicationYear);
-            if (tagIds != null && !tagIds.isEmpty()) {
-                json.put("tagIds", new JSONArray(tagIds));
-            }
         } catch (JSONException e) { return; }
 
         RequestBody body = RequestBody.create(json.toString(), MediaType.parse("application/json; charset=utf-8"));
+
+        // 1. Création du livre
         service.addBook(authorId, body).enqueue(new Callback<>() {
             @Override
             public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     try {
                         JSONObject resJson = new JSONObject(response.body().string());
-                        Book newBook = new Book(resJson.getInt("id"), title, publicationYear, authorId, new ArrayList<>());
-                        
-                        ArrayList<Book> currentBooks = booksLiveData.getValue();
-                        if (currentBooks != null) {
-                            currentBooks.add(newBook);
-                            booksLiveData.postValue(currentBooks);
-                        }
-                        if (authorsLiveData != null) {
-                            ArrayList<Author> currentAuthors = authorsLiveData.getValue();
-                            if (currentAuthors != null) {
-                                for (Author a : currentAuthors) {
-                                    if (a.getId() == authorId) {
-                                        a.getBooks().add(newBook);
-                                        authorsLiveData.postValue(currentAuthors);
-                                        break;
+                        final int newBookId = resJson.getInt("id");
+
+                        // 2. Si on a des tags, on les ajoute un par un
+                        if (tagIds != null && !tagIds.isEmpty()) {
+                            for (int tagId : tagIds) {
+                                service.addTagToBook(newBookId, tagId).enqueue(new Callback<>() {
+                                    @Override
+                                    public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                                        // Tag ajouté
                                     }
-                                }
+                                    @Override public void onFailure(Call<ResponseBody> call, Throwable t) {}
+                                });
                             }
                         }
-                    } catch (IOException | JSONException e) {
-                        Log.e("addBook", "Error", e);
-                    }
+
+                        // 3. Rafraîchir les données globales après un petit délai ou via fetch
+                        fetchBooks(booksLiveData, authorsLiveData);
+
+                    } catch (Exception e) { Log.e("addBook", "Error", e); }
                 }
             }
-            @Override
-            public void onFailure(@NonNull Call<ResponseBody> call, @NonNull Throwable t) {
-                Log.e("addBook", "onFailure", t);
-            }
+            @Override public void onFailure(@NonNull Call<ResponseBody> call, @NonNull Throwable t) {}
         });
     }
+
 
     public void deleteBook(final int bookId, final MutableLiveData<ArrayList<Book>> booksLiveData, final MutableLiveData<ArrayList<Author>> authorsLiveData) {
         service.deleteBook(bookId).enqueue(new Callback<>() {
