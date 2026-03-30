@@ -2,9 +2,18 @@ package p42.androidbooksclient;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -14,14 +23,6 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProvider;
 
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.TextView;
-import android.widget.Toast;
-
 import java.util.ArrayList;
 
 public class BookDetailFragment extends Fragment {
@@ -30,6 +31,9 @@ public class BookDetailFragment extends Fragment {
     private AuthorViewModel authorViewModel;
     private Book currentBook;
     private ImageView imgCover;
+    private SharedPreferences prefs;
+
+    public BookDetailFragment() {}
 
     private final ActivityResultLauncher<Intent> pickImageLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -41,7 +45,11 @@ public class BookDetailFragment extends Fragment {
                             requireActivity().getContentResolver().takePersistableUriPermission(
                                     selectedImageUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
                             
-                            bookViewModel.updateCover(currentBook.getId(), selectedImageUri.toString());
+                            prefs.edit().putString("cover_" + currentBook.getId(), selectedImageUri.toString()).apply();
+
+                            currentBook.setCoverUri(selectedImageUri.toString());
+                            imgCover.setImageURI(selectedImageUri);
+                            
                         } catch (Exception e) {
                             Toast.makeText(getContext(), "Erreur lors de la sélection de l'image", Toast.LENGTH_SHORT).show();
                         }
@@ -49,8 +57,6 @@ public class BookDetailFragment extends Fragment {
                 }
             }
     );
-
-    public BookDetailFragment() {}
 
     @Override
     public View onCreateView(@NonNull final LayoutInflater inflater, final ViewGroup container, final Bundle savedInstanceState) {
@@ -60,6 +66,8 @@ public class BookDetailFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull final View view, @Nullable final Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        prefs = requireActivity().getSharedPreferences("book_covers", Context.MODE_PRIVATE);
 
         final TextView txtTitle = view.findViewById(R.id.txtDetailTitle);
         final TextView txtAuthor = view.findViewById(R.id.txtDetailAuthor);
@@ -78,8 +86,13 @@ public class BookDetailFragment extends Fragment {
                 txtTitle.setText(book.getTitle());
                 txtYear.setText(book.getPublicationYear() != null ? "Publié en : " + book.getPublicationYear() : "Année inconnue");
 
-                if (book.getCoverUri() != null) {
-                    imgCover.setImageURI(Uri.parse(book.getCoverUri()));
+                String uriStr = book.getCoverUri();
+                if (uriStr == null) {
+                    uriStr = prefs.getString("cover_" + book.getId(), null);
+                }
+
+                if (uriStr != null) {
+                    imgCover.setImageURI(Uri.parse(uriStr));
                 } else {
                     imgCover.setImageResource(android.R.drawable.ic_menu_gallery);
                 }
@@ -124,6 +137,8 @@ public class BookDetailFragment extends Fragment {
                     .setTitle("Confirmation de suppression")
                     .setMessage("Voulez-vous vraiment supprimer ce livre ?")
                     .setPositiveButton("Supprimer", (dialog, which) -> {
+                        prefs.edit().remove("cover_" + currentBook.getId()).apply();
+
                         bookViewModel.deleteBook(currentBook.getId(), (MutableLiveData<ArrayList<Author>>) authorViewModel.getAuthors());
                         Toast.makeText(getContext(), "Livre supprimé", Toast.LENGTH_SHORT).show();
                         requireActivity().getSupportFragmentManager().popBackStack();
