@@ -37,11 +37,14 @@ public class BookDetailFragment extends Fragment {
                 if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
                     Uri selectedImageUri = result.getData().getData();
                     if (selectedImageUri != null && currentBook != null) {
-                        requireActivity().getContentResolver().takePersistableUriPermission(
-                                selectedImageUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                        
-                        currentBook.setCoverUri(selectedImageUri.toString());
-                        imgCover.setImageURI(selectedImageUri);
+                        try {
+                            requireActivity().getContentResolver().takePersistableUriPermission(
+                                    selectedImageUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                            
+                            bookViewModel.updateCover(currentBook.getId(), selectedImageUri.toString());
+                        } catch (Exception e) {
+                            Toast.makeText(getContext(), "Erreur lors de la sélection de l'image", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 }
             }
@@ -109,6 +112,8 @@ public class BookDetailFragment extends Fragment {
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
             intent.addCategory(Intent.CATEGORY_OPENABLE);
             intent.setType("image/*");
+            intent.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             pickImageLauncher.launch(intent);
         });
 
