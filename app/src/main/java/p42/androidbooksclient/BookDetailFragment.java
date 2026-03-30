@@ -1,8 +1,13 @@
 package p42.androidbooksclient;
 
+import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -13,6 +18,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -23,6 +29,23 @@ public class BookDetailFragment extends Fragment {
     private BookViewModel bookViewModel;
     private AuthorViewModel authorViewModel;
     private Book currentBook;
+    private ImageView imgCover;
+
+    private final ActivityResultLauncher<Intent> pickImageLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+                    Uri selectedImageUri = result.getData().getData();
+                    if (selectedImageUri != null && currentBook != null) {
+                        requireActivity().getContentResolver().takePersistableUriPermission(
+                                selectedImageUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        
+                        currentBook.setCoverUri(selectedImageUri.toString());
+                        imgCover.setImageURI(selectedImageUri);
+                    }
+                }
+            }
+    );
 
     public BookDetailFragment() {}
 
@@ -40,6 +63,8 @@ public class BookDetailFragment extends Fragment {
         final TextView txtYear = view.findViewById(R.id.txtDetailYear);
         final TextView txtTags = view.findViewById(R.id.txtDetailTags);
         final Button btnDelete = view.findViewById(R.id.btnDeleteBook);
+        final Button btnSetCover = view.findViewById(R.id.btnSetCover);
+        imgCover = view.findViewById(R.id.imgBookCover);
 
         bookViewModel = new ViewModelProvider(requireActivity()).get(BookViewModel.class);
         authorViewModel = new ViewModelProvider(requireActivity()).get(AuthorViewModel.class);
@@ -50,7 +75,12 @@ public class BookDetailFragment extends Fragment {
                 txtTitle.setText(book.getTitle());
                 txtYear.setText(book.getPublicationYear() != null ? "Publié en : " + book.getPublicationYear() : "Année inconnue");
 
-                // Find author name from AuthorViewModel
+                if (book.getCoverUri() != null) {
+                    imgCover.setImageURI(Uri.parse(book.getCoverUri()));
+                } else {
+                    imgCover.setImageResource(android.R.drawable.ic_menu_gallery);
+                }
+
                 authorViewModel.getAuthors().observe(getViewLifecycleOwner(), authors -> {
                     for (Author a : authors) {
                         if (a.getId() == book.getAuthorId()) {
@@ -73,6 +103,13 @@ public class BookDetailFragment extends Fragment {
                 }
                 txtTags.setText(tagsString.toString());
             }
+        });
+
+        btnSetCover.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("image/*");
+            pickImageLauncher.launch(intent);
         });
 
         btnDelete.setOnClickListener(v -> {

@@ -8,6 +8,7 @@ public class Book {
     private final Integer publication_year;
     private final int authorId;
     private final ArrayList<Tag> tags;
+    private String coverUri;
 
     public Book(final int id, final String title, final Integer publication_year, final int authorId, final ArrayList<Tag> tags) {
         this.id = id;
@@ -22,4 +23,7 @@ public class Book {
     public Integer getPublicationYear() { return publication_year; }
     public int getAuthorId() { return authorId; }
     public ArrayList<Tag> getTags() { return tags; }
+    
+    public String getCoverUri() { return coverUri; }
+    public void setCoverUri(String coverUri) { this.coverUri = coverUri; }
 }
