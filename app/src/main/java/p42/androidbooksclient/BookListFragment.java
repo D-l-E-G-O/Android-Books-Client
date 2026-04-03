@@ -5,7 +5,9 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -46,18 +48,12 @@ public class BookListFragment extends Fragment {
 
         adapter = new BookAdapter(book -> {
             bookViewModel.selectBook(book);
-            requireActivity().getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragmentContainerView, new BookDetailFragment())
-                    .addToBackStack(null)
-                    .commit();
+            Navigation.findNavController(view).navigate(R.id.action_bookListFragment_to_bookDetailFragment);
         });
         recyclerView.setAdapter(adapter);
 
         final FloatingActionButton fab = view.findViewById(R.id.fabBookAdd);
-        fab.setOnClickListener(v -> requireActivity().getSupportFragmentManager().beginTransaction()
-                .replace(R.id.fragmentContainerView, new BookAddFragment())
-                .addToBackStack(null)
-                .commit());
+        fab.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_bookListFragment_to_bookAddFragment));
     }
 
     private void observeData() {

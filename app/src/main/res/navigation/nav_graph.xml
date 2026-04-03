@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/bookListFragment">
+
+    <fragment
+        android:id="@+id/bookListFragment"
+        android:name="p42.androidbooksclient.BookListFragment"
+        android:label="Books"
+        tools:layout="@layout/fragment_book_list">
+        <action
+            android:id="@+id/action_bookListFragment_to_bookDetailFragment"
+            app:destination="@id/bookDetailFragment" />
+        <action
+            android:id="@+id/action_bookListFragment_to_bookAddFragment"
+            app:destination="@id/bookAddFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/bookDetailFragment"
+        android:name="p42.androidbooksclient.BookDetailFragment"
+        android:label="Book Detail"
+        tools:layout="@layout/fragment_book_detail" />
+
+    <fragment
+        android:id="@+id/bookAddFragment"
+        android:name="p42.androidbooksclient.BookAddFragment"
+        android:label="Add Book"
+        tools:layout="@layout/fragment_book_add" />
+
+    <fragment
+        android:id="@+id/authorListFragment"
+        android:name="p42.androidbooksclient.AuthorListFragment"
+        android:label="Authors"
+        tools:layout="@layout/fragment_author_list">
+        <action
+            android:id="@+id/action_authorListFragment_to_authorDetailFragment"
+            app:destination="@id/authorDetailFragment" />
+        <action
+            android:id="@+id/action_authorListFragment_to_authorAddFragment"
+            app:destination="@id/authorAddFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/authorDetailFragment"
+        android:name="p42.androidbooksclient.AuthorDetailFragment"
+        android:label="Author Detail"
+        tools:layout="@layout/fragment_author_detail">
+        <action
+            android:id="@+id/action_authorDetailFragment_to_bookDetailFragment"
+            app:destination="@id/bookDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/authorAddFragment"
+        android:name="p42.androidbooksclient.AuthorAddFragment"
+        android:label="Add Author"
+        tools:layout="@layout/fragment_author_add" />
+
+</navigation>

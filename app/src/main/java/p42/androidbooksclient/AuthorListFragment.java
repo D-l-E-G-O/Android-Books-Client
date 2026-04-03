@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -43,18 +44,12 @@ public class AuthorListFragment extends Fragment {
 
         adapter = new AuthorAdapter(author -> {
             authorViewModel.selectAuthor(author);
-            requireActivity().getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragmentContainerView, new AuthorDetailFragment())
-                    .addToBackStack(null)
-                    .commit();
+            Navigation.findNavController(view).navigate(R.id.action_authorListFragment_to_authorDetailFragment);
         });
         recyclerView.setAdapter(adapter);
 
         final FloatingActionButton fab = view.findViewById(R.id.fabAuthorAdd);
-        fab.setOnClickListener(v -> requireActivity().getSupportFragmentManager().beginTransaction()
-                .replace(R.id.fragmentContainerView, new AuthorAddFragment())
-                .addToBackStack(null)
-                .commit());
+        fab.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_authorListFragment_to_authorAddFragment));
     }
 
     private void observeData() {

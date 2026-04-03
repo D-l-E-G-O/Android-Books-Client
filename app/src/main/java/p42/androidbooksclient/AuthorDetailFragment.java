@@ -8,6 +8,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -49,10 +50,7 @@ public class AuthorDetailFragment extends Fragment {
 
         adapter = new BookAdapter(book -> {
             bookViewModel.selectBook(book);
-            requireActivity().getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragmentContainerView, new BookDetailFragment())
-                    .addToBackStack(null)
-                    .commit();
+            Navigation.findNavController(view).navigate(R.id.action_authorDetailFragment_to_bookDetailFragment);
         });
         recyclerBooks.setAdapter(adapter);
 
@@ -73,7 +71,7 @@ public class AuthorDetailFragment extends Fragment {
                     .setPositiveButton("Supprimer", (dialog, which) -> {
                         authorViewModel.deleteAuthor(currentAuthor.getId(), (MutableLiveData<ArrayList<Book>>) bookViewModel.getBooks(null));
                         Toast.makeText(getContext(), "Auteur supprimé", Toast.LENGTH_SHORT).show();
-                        requireActivity().getSupportFragmentManager().popBackStack();
+                        Navigation.findNavController(view).popBackStack();
                     })
                     .setNegativeButton("Annuler", null)
                     .show();
