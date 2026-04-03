@@ -10,7 +10,7 @@ constraintlayout = "2.2.1"
 recyclerview = "1.4.0"
 fragment = "1.8.9"
 retrofit = "3.0.0"
-navigation = "2.8.8"
+navigation = "2.9.7"
 navigationFragmentKtx = "2.9.7"
 navigationUiKtx = "2.9.7"
 
