@@ -1,72 +1,108 @@
-Projet ABC - Android Books Client
-=================================
+# Android Books Client ![Static Badge](https://img.shields.io/badge/Statut-Termin%C3%A9-red)
 
-L'objectif de ce projet est de réaliser un client mobile pour l'API Books développée dans le module W41, dont [une correction minimale est disponible ici](API.md).
+**Projet de fin de 2e année de BUT Informatique à l'IUT d'Illkirch, le but de ce projet est de réaliser un client mobile Android pour l’API Books développée avec React**, en appliquant une architecture moderne, propre et maintenable.
 
-Binômes
--------
+---
 
-Vous devez vous mettre en binôme avec **un autre étudiant de votre groupe TP**.
-En cas de nombre d'élèves impair dans le groupe, il y aura un monôme.
+## Technologies utilisées
 
-Vous devez déclarer vos binômes dans ce fichier : [https://seafile.unistra.fr/f/b0020cf2322a478aabb0/](https://seafile.unistra.fr/f/b0020cf2322a478aabb0/)
+### API (backend)
+- **Langage :** TypeScript
+- **Environnement** : React, Node.js + Express.js (API REST)
+- **Accès aux données et modélisation :** Prisma ORM
+- **Base de données :** SQLite
+- **Authentification :** JWT
 
-À noter que le **planning des soutenances** sera également ajouté dans ce fichier.
+### Client Android
+- **Langage :** Java
+- **Architecture :** MVVM (Model - View - ViewModel)
+- **Réseau :** Retrofit (communication avec l’API)
 
-Préparation du dépôt
---------------------
+### Outils
+- **Android Studio**
+- **Git**
+- **Postman** pour tester les appels à l'API
 
-1. Créez un groupe Gitlab nommé **`nom1-nom2`** où `nom1` et `nom2` sont les noms de famille des deux membres du binôme.
-1. Forkez le dépôt https://git.unistra.fr/p42/p42-abc dans le groupe créé ci-dessus **en conservant l'URL p42-abc**.
-1. **Passez ce dépôt en privé.**
-1. Ajoutez votre enseignant de TP comme Reporter de votre dépôt.
-1. Ajoutez votre enseignant de TP de P42 comme Reporter de votre dépôt de W41.
+---
 
-Rendu
------
+## Équipe
 
-- Quand ? **le 5 avril à 0h00** (ou le 4 avril à 24h00, au choix)
-- Où ? Sur votre dépôt Git.
-- Quoi ?
-  - Le code de l'application
-  - Un rapport expliquant votre architecture, ce qui est censé fonctionner et ne pas fonctionner, les difficultés que vous avez rencontré.
-  - Un mode d'emploi pour déployer votre API de W41. À défaut, votre application sera testée avec [la correction de l'API fournie en W41](API.md).
+- **Nombre de développeurs :** 2
+- **Durée du projet :** 3 semaines
 
-**Attention** : il faut que votre enseignant de TP de P42 soit **reporter de votre dépôts de P42 ET de celui de W41**.
+---
 
-Fonctionnalités
----------------
+## Installation et exécution
 
-L'application doit proposer un certain nombre de fonctionnalités :
+### Prérequis
 
-- **Afficher la liste des livres** : lorsqu'un livre est sélectionné, la description de ce livre doit s'afficher, dont les tags.
-- **Afficher la liste des auteurs** : lorsqu'un auteur est sélectionné, la liste des titres des livres qu'il a écrit doit s'afficher. Un clic sur l'un des livres doit afficher ses détails.
-- **Créer un livre** à partir d'un formulaire.
-- **Supprimer un livre** depuis sa page de description.
-- **Créer un auteur** à partir d'un formulaire.
-- **Supprimer un auteur** (et les livres associés) depuis sa page de description.
+- Android Studio (version récente recommandée)
+- SDK Android installé
+- Une API Books accessible (instance W41 personnelle ou correction minimale)
 
-Bonus : L'application peut permettre d'**associer une couverture à un livre**, mais uniquement localement. L'image est stockée sur le téléphone, pas sur le serveur.
+### Étapes
 
-Interface
----------
+1. **Cloner le dépôt**
+   ```bash
+   git clone https://github.com/D-l-E-G-O/Android-Books-Client.git
+   cd Android-Books-Client
+   ```
 
-1. L'application est composée d'**une seule activité principale**. Cette activité contiendra une **`Bottom Navigation Activity`** avec deux menus proposants respectivement la liste des livres et la liste des auteurs.
-1. L'écran d'accueil de l'application affiche la liste des livres.
-1. Les listes des livres et des auteurs sont affichées dans des **`RecyclerView`**.
-1. Lors d'un **clic sur un livre**, ses informations sont affichées dans un nouveau fragment.
-1. Lors d'un **clic sur un auteur**, les livres de cet auteur sont affichés dans un nouveau fragment.
-1. La **création des livres et des auteurs** doit être proposée à partir de [FABs](https://developer.android.com/develop/ui/views/components/floating-action-button) présents respectivement sur la liste des livres et des auteurs.
+2. **Ouvrir le projet dans Android Studio**
 
-Pour gérer les **clics sur les items d'un `RecyclerView`**, vous pouvez vous référer à [ce site](https://dev.to/theplebdev/adding-onclicklistener-to-recyclerview-in-android-3amb).
+3. **Configurer l’URL de l’API**
+   - Vérifier l’endpoint utilisé par Retrofit
+   - Pointer vers votre API W41 (ou la correction minimale si nécessaire)
 
-Architecture
-------------
+4. **Compiler et lancer l’application**
+   - Sur émulateur Android ou appareil physique
 
-Vous devez mettre en place l'architecture moderne en MVVM vue en cours et en TP, basée sur les `ViewModel` pour les données et un "repository" pour centraliser les requêtes à effectuer avec Retrofit.
+---
 
-Conseils
---------
+## Fonctionnalités principales
 
-- Vous pouvez travailler dans un premier temps avec **des données "en dur"**, sans communication avec l'API.
-- C'est un projet assez conséquent, l'essentiel n'est pas d'implémenter toutes les fonctionnalités mais d'**implémenter "proprement"** celles que vous aurez le temps de faire.
+### Gestion des livres
+
+- Affichage de la liste des livres
+- Affichage des détails d’un livre sélectionné (incluant les tags)
+- Création d’un livre via formulaire
+- Suppression d’un livre depuis sa page de description
+
+### Gestion des auteurs
+
+- Affichage de la liste des auteurs
+- Affichage des livres d’un auteur sélectionné
+- Navigation vers le détail d’un livre depuis la liste des livres d’un auteur
+- Création d’un auteur via formulaire
+- Suppression d’un auteur (et des livres associés)
+
+### Bonus
+
+- Association d’une couverture à un livre **uniquement en local** (image stockée sur le téléphone, pas sur le serveur)
+
+---
+
+## Interface utilisateur
+
+L’application respecte les contraintes suivantes :
+
+- Une **activité principale unique**
+- Une **Bottom Navigation Activity** avec deux menus :
+  - Liste des livres
+  - Liste des auteurs
+- Écran d’accueil : **liste des livres**
+- Listes affichées dans des **RecyclerView**
+- Clic sur un livre : ouverture d’un fragment de détail
+- Clic sur un auteur : ouverture d’un fragment affichant ses livres
+- Création de livres/auteurs via **FAB** sur les écrans correspondants
+
+---
+
+## Architecture technique
+
+Le projet suit une architecture Android moderne :
+
+- **MVVM** pour séparer clairement interface, logique et données
+- **ViewModel** pour gérer l’état et les données liées à l’UI
+- **Repository** pour centraliser l’accès aux données
+- **Retrofit** pour les appels réseau vers l’API Books
